@@ -72,7 +72,14 @@ export async function POST(request: Request) {
       category: body.category,
       file_url: body.file_url,
       file_type: body.file_type,
-      visibility: body.visibility || 'commun',
+      // Map UI visibility values to DB values
+      visibility: (() => {
+        const v = body.visibility || 'commun'
+        if (v === 'prof') return 'teacher'
+        if (v === 'eleve') return 'student'
+        if (v === 'commun') return 'all'
+        return v // already correct
+      })(),
       is_published: body.is_published || false,
       score: 0,
     })
@@ -122,7 +129,11 @@ export async function PUT(request: Request) {
   if (body.category !== undefined) updateData.category = body.category
   if (body.file_url !== undefined) updateData.file_url = body.file_url
   if (body.file_type !== undefined) updateData.file_type = body.file_type
-  if (body.visibility !== undefined) updateData.visibility = body.visibility
+  if (body.visibility !== undefined) {
+    // Map UI values to DB values
+    const v = body.visibility
+    updateData.visibility = v === 'prof' ? 'teacher' : v === 'eleve' ? 'student' : v === 'commun' ? 'all' : v
+  }
   if (body.is_published !== undefined) updateData.is_published = body.is_published
   if (body.score !== undefined) updateData.score = body.score
 

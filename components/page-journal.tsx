@@ -126,7 +126,7 @@ export function PageJournal({ seances, setSeances, preps, cycles, toast, addPoin
   const save = async () => {
     if (!form.titre) return
     const prepLiee = preps.find(p => String(p.id) === String(form.prepLieeId)) || null
-    const newSeance: Seance = { id: Date.now(), ...form, prepLiee } as any
+    const newSeance: Seance = { id: `new_${Date.now()}`, ...form, prepLiee } as any
     if (saveSeance) {
       const success = await saveSeance(newSeance)
       if (!success) { toast("Erreur lors de la sauvegarde. Reessayez."); return }

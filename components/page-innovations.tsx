@@ -99,7 +99,7 @@ export function PageInnovations({ innovations, setInnovations, toast, user, vote
       description: correctText(form.description)
     }
     const newInnovation: Innovation = { 
-      id: Date.now(), 
+      id: `new_${Date.now()}`, 
       ...correctedForm, 
       date: new Date().toLocaleDateString("fr-FR"), 
       likes: 0,

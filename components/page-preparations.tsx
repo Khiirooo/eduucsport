@@ -126,8 +126,9 @@ function PrepForm({ formData, onChange, onSave, onCancel, btnLabel, isEdit = fal
   )
 }
 
-export function PagePreparations({ preps, setPreps, toast, user, addPoints, toggleLikePrep, isPrepLiked, savePreparation, deletePreparation }: {
-  preps: Preparation[]; setPreps: React.Dispatch<React.SetStateAction<Preparation[]>>; 
+export function PagePreparations({ preps, setPreps, communityPreps = [], toast, user, addPoints, toggleLikePrep, isPrepLiked, savePreparation, deletePreparation }: {
+  preps: Preparation[]; setPreps: React.Dispatch<React.SetStateAction<Preparation[]>>;
+  communityPreps?: Preparation[];
   toast: (m: string) => void; user: User; addPoints: (p: number, r: string) => void;
   toggleLikePrep: (id: string | number) => void; isPrepLiked: (id: string | number) => boolean;
   savePreparation?: (prep: Preparation) => Promise<boolean>;
@@ -177,7 +178,7 @@ export function PagePreparations({ preps, setPreps, toast, user, addPoints, togg
     }
     
     const newPrep: Preparation = {
-      id: Date.now(),
+      id: `new_${Date.now()}`,
       ...correctedForm,
       competences: "", organisation: "", differenciation: "",
       published: false, liked: false, date: new Date().toLocaleDateString("fr-FR"),
@@ -267,60 +268,8 @@ export function PagePreparations({ preps, setPreps, toast, user, addPoints, togg
     return p.auteurId === user.id || p.auteur === user.name || !String(p.id).startsWith("cp")
   }
 
-  const communityPreps: Preparation[] = [
-    { id: "cp1", titre: "Course de haies debutant", discipline: "Athletisme", category: "Technique", location: "exterieur", classe: "3eme secondaire", duree: "55", auteur: "Prof. Dumont", auteurId: "demo1", isTeacher: true, published: true, liked: false, date: "10/01/2026", objectifs: "Maitriser la technique de franchissement de haies basses.", competences: "Motricite globale, coordination.", materiel: "8 haies basses, plots, chronometre.", organisation: "Groupes de 4 eleves.", deroulement: "Echauffement puis exercices progressifs.", differenciation: "Adapter la hauteur des haies.", visibility: "commun", reglement: "Respecter les espacements entre haies. Ne pas courir si l'eleve precedent n'a pas termine." },
-    { id: "cp2", titre: "Jeu de passes handball", discipline: "Sports collectifs", category: "Jeu collectif", location: "interieur", classe: "2eme secondaire", duree: "60", auteur: "Julie Martin", auteurId: "demo2", isTeacher: false, published: true, liked: false, date: "05/02/2026", objectifs: "Apprendre les passes de base.", competences: "Cooperation, precision.", materiel: "Ballons handball, plots, dossards.", organisation: "Equipes de 6.", deroulement: "Mise en train puis ateliers.", differenciation: "Adapter distances.", visibility: "commun", reglement: "Pas de contact physique. 3 secondes max avec le ballon." },
-    { id: "cp3", titre: "Circuit fitness", discipline: "Athletisme", category: "Circuit", location: "les_deux", classe: "Toutes", duree: "50", auteur: "Dr. Lambert", auteurId: "demo3", isTeacher: true, published: true, liked: false, date: "20/01/2026", objectifs: "Developper capacites physiques.", competences: "Endurance, force, autonomie.", materiel: "Tapis, cones, cordes.", organisation: "8 ateliers 40s/20s.", deroulement: "2 passages du circuit.", differenciation: "Intensite adaptable.", visibility: "prof", reglement: "Hydratation obligatoire. Pause si essoufflement excessif." },
-  ]
 
-  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    const ext = file.name.split(".").pop()?.toLowerCase() || ""
-    const isPDF = ext === "pdf"
-    const isWord = ["doc", "docx"].includes(ext)
-    const isImage = ["jpg", "jpeg", "png", "gif", "webp"].includes(ext)
-    const isText = ["txt", "json"].includes(ext)
-
-    if (isPDF || isWord || isImage) {
-      try {
-        const dataUrl = await fileToDataUrl(file)
-        const newPrep: any = {
-          id: Date.now(), titre: file.name.replace(/\.[^.]+$/, ""),
-          discipline: "", classe: "", duree: "60", objectifs: "", competences: "", materiel: "", organisation: "",
-          deroulement: `(Document importe: ${file.name})`, differenciation: "", category: "", location: "", reglement: "",
-          imported: true, auteur: user.name, auteurId: user.id, isTeacher: user.isTeacher,
-          published: false, liked: false, date: new Date().toLocaleDateString("fr-FR"),
-          fileName: file.name, fileUrl: dataUrl, fileType: isPDF ? "pdf" : isImage ? "image" : "word",
-          visibility: "commun", score: 0
-        }
-        setPreps(p => [...p, newPrep])
-        toast(`"${newPrep.titre}" importe !`)
-      } catch {
-        toast("Erreur lors de l'importation du fichier.")
-      }
-    } else if (isText) {
-      const reader = new FileReader()
-      reader.onload = () => {
-        const newPrep: any = {
-          id: Date.now(), titre: file.name.replace(/\.[^.]+$/, ""),
-          discipline: "", classe: "", duree: "60", objectifs: "", competences: "", materiel: "", organisation: "",
-          deroulement: String(reader.result || "(Contenu importe)"), differenciation: "", category: "", location: "", reglement: "",
-          imported: true, auteur: user.name, auteurId: user.id, isTeacher: user.isTeacher,
-          published: false, liked: false, date: new Date().toLocaleDateString("fr-FR"), fileName: file.name,
-          visibility: "commun", score: 0
-        }
-        setPreps(p => [...p, newPrep])
-        toast(`"${newPrep.titre}" importe !`)
-      }
-      reader.readAsText(file)
-    } else {
-      toast("Format non supporte. Utilisez PDF, Word, Image, TXT ou JSON.")
-    }
-    e.target.value = ""
-  }
-
-  const tabs = [
+    const tabs = [
     { id: "mes", l: "Mes preparations" }, 
     { id: "pub", l: "Publiees" }, 
     { id: "likes", l: "Mes favoris" }

@@ -21,7 +21,7 @@ import type { User } from "@/lib/types"
 
 export function EducSportApp() {
   const {
-    user, setUser, preps, setPreps, cycles, setCycles, seances, setSeances,
+    user, setUser, preps, setPreps, communityPreps, cycles, setCycles, seances, setSeances,
     posts, setPosts, ecoles, setEcoles, innovations, setInnovations,
     votes, setVotes, toastMsg, toast, addPoints, unlockBadge, hydrated,
     toggleLikePrep, toggleLikeCommunity, isPrepLiked, isCommunityLiked,
@@ -86,9 +86,15 @@ export function EducSportApp() {
   if (view === "error") return <AuthErrorPage setView={setView} message={authError} />
   if (view === "pending") return <PendingVerificationPage setView={setView} />
 
+  // Protect admin page
+  const hasAdminAccess = user && (user.isAdmin === true || user.isModerator === true || user.role === 'admin' || user.role === 'moderator')
+  
+  // If user tries to go to admin without rights, redirect
+  const safePage = page === 'admin' && !hasAdminAccess ? 'accueil' : page
+
   const pages: Record<string, React.ReactNode> = {
     accueil: <PageAccueil user={user!} setPage={setPage} preps={preps} cycles={cycles} ecoles={ecoles} seances={seances} />,
-    preparations: <PagePreparations preps={preps} setPreps={setPreps} toast={toast} user={user!} addPoints={addPoints} toggleLikePrep={toggleLikePrep} isPrepLiked={isPrepLiked} savePreparation={savePreparation} deletePreparation={deletePreparation} />,
+    preparations: <PagePreparations preps={preps} setPreps={setPreps} communityPreps={communityPreps} toast={toast} user={user!} addPoints={addPoints} toggleLikePrep={toggleLikePrep} isPrepLiked={isPrepLiked} savePreparation={savePreparation} deletePreparation={deletePreparation} />,
     cycles: <PageCycles cycles={cycles} setCycles={setCycles} preps={preps} seances={seances} toast={toast} setPage={setPage} addPoints={addPoints} user={user!} isPrepLiked={isPrepLiked} saveCycle={saveCycle} deleteCycle={deleteCycle} />,
     journal: <PageJournal seances={seances} setSeances={setSeances} preps={preps} cycles={cycles} toast={toast} addPoints={addPoints} isPrepLiked={isPrepLiked} saveSeance={saveSeance} deleteSeance={deleteSeance} />,
     ia: <PageIA />,
@@ -104,7 +110,7 @@ export function EducSportApp() {
       <style>{`* {box-sizing:border-box} @keyframes slideUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}`}</style>
       <DashboardNav page={page} setPage={setPage} user={user!} onLogout={onLogout} />
       <div style={{ maxWidth: 1280, margin: "0 auto", padding: "28px 24px", animation: "slideUp .2s ease" }} key={page}>
-        {pages[page] || pages.accueil}
+        {pages[safePage] || pages.accueil}
       </div>
       <Toast msg={toastMsg} onClose={() => toast("")} />
     </div>

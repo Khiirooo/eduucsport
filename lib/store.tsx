@@ -11,6 +11,7 @@ import type {
 interface AppState {
   user: User | null
   preps: Preparation[]
+  communityPreps: Preparation[]
   cycles: Cycle[]
   seances: Seance[]
   posts: ForumPost[]
@@ -27,6 +28,7 @@ interface AppState {
 interface AppActions {
   setUser: React.Dispatch<React.SetStateAction<User | null>>
   setPreps: React.Dispatch<React.SetStateAction<Preparation[]>>
+  setCommunityPreps: React.Dispatch<React.SetStateAction<Preparation[]>>
   setCycles: React.Dispatch<React.SetStateAction<Cycle[]>>
   setSeances: React.Dispatch<React.SetStateAction<Seance[]>>
   setPosts: React.Dispatch<React.SetStateAction<ForumPost[]>>
@@ -62,6 +64,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(false)
   const [user, setUser] = useState<User | null>(null)
   const [preps, setPreps] = useState<Preparation[]>([])
+  const [communityPreps, setCommunityPreps] = useState<Preparation[]>([])
   const [cycles, setCycles] = useState<Cycle[]>([])
   const [seances, setSeances] = useState<Seance[]>([])
   const [posts, setPosts] = useState<ForumPost[]>([])
@@ -100,7 +103,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           auteur: p.profiles ? `${p.profiles.first_name || ''} ${p.profiles.last_name || ''}`.trim() : '',
           auteurId: p.user_id,
           isTeacher: p.profiles?.role === 'teacher',
-          visibility: p.visibility || 'commun',
+          // Map DB visibility values back to UI values
+          visibility: (() => {
+            const v = p.visibility || 'all'
+            if (v === 'teacher') return 'prof'
+            if (v === 'student') return 'eleve'
+            if (v === 'all') return 'commun'
+            return v
+          })() as any,
           score: p.score || 0,
           category: p.category,
           location: p.location,
@@ -187,6 +197,43 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         })))
       }
 
+      // Load all published preps (community feed)
+      const allPrepsRes = await fetch('/api/preparations?filter=published')
+      const allPrepsJson = await allPrepsRes.json()
+      if (allPrepsJson.preparations) {
+        setCommunityPreps(allPrepsJson.preparations.map((p: any) => ({
+          id: p.id,
+          titre: p.titre || '',
+          discipline: p.discipline || '',
+          classe: p.classe || '',
+          duree: String(p.duree || ''),
+          objectifs: p.objectifs || '',
+          competences: '',
+          materiel: p.materiel || '',
+          organisation: '',
+          deroulement: p.deroulement || '',
+          differenciation: '',
+          published: true,
+          liked: false,
+          date: p.created_at ? new Date(p.created_at).toLocaleDateString('fr-FR') : '',
+          auteur: p.profiles ? `${p.profiles.first_name || ''} ${p.profiles.last_name || ''}`.trim() : '',
+          auteurId: p.user_id,
+          isTeacher: p.profiles?.role === 'teacher',
+          visibility: (() => {
+            const v = p.visibility || 'all'
+            if (v === 'teacher') return 'prof'
+            if (v === 'student') return 'eleve'
+            return 'commun'
+          })() as any,
+          score: p.score || 0,
+          category: p.category,
+          location: p.location,
+          reglement: p.reglement,
+          fileUrl: p.file_url,
+          fileType: p.file_type,
+        })))
+      }
+
       // Load innovations via API
       const innovRes = await fetch(`/api/innovations`)
       const innovJson = await innovRes.json()
@@ -215,7 +262,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   // ─── Save preparation via API ───
   const savePreparation = useCallback(async (prep: Preparation): Promise<boolean> => {
     try {
-      const isExisting = typeof prep.id === 'string' && prep.id.includes('-')
+      const isExisting = typeof prep.id === 'string' && prep.id.includes('-') && !prep.id.startsWith('new_')
       
       const body = {
         id: isExisting ? prep.id : undefined,
@@ -283,7 +330,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   // ─── Save cycle via API ───
   const saveCycle = useCallback(async (cycle: Cycle): Promise<boolean> => {
     try {
-      const isExisting = typeof cycle.id === 'string' && cycle.id.includes('-')
+      const isExisting = typeof cycle.id === 'string' && cycle.id.includes('-') && !cycle.id.startsWith('new_')
       
       const body = {
         id: isExisting ? cycle.id : undefined,
@@ -339,7 +386,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   // ─── Save seance via API ───
   const saveSeance = useCallback(async (seance: Seance): Promise<boolean> => {
     try {
-      const isExisting = typeof seance.id === 'string' && seance.id.includes('-')
+      const isExisting = typeof seance.id === 'string' && seance.id.includes('-') && !seance.id.startsWith('new_')
       
       const body = {
         id: isExisting ? seance.id : undefined,
@@ -395,7 +442,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   // ─── Save forum post via API ───
   const saveForumPost = useCallback(async (post: ForumPost): Promise<boolean> => {
     try {
-      const isExisting = typeof post.id === 'string' && post.id.includes('-')
+      const isExisting = typeof post.id === 'string' && post.id.includes('-') && !post.id.startsWith('new_')
       
       const body = {
         id: isExisting ? post.id : undefined,
@@ -445,7 +492,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   // ─── Save ecole via API ───
   const saveEcole = useCallback(async (ecole: Ecole): Promise<boolean> => {
     try {
-      const isExisting = typeof ecole.id === 'string' && ecole.id.includes('-')
+      const isExisting = typeof ecole.id === 'string' && ecole.id.includes('-') && !ecole.id.startsWith('new_')
       
       const body = {
         id: isExisting ? ecole.id : undefined,
@@ -502,7 +549,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   // ─── Save innovation via API ───
   const saveInnovation = useCallback(async (innovation: Innovation): Promise<boolean> => {
     try {
-      const isExisting = typeof innovation.id === 'string' && innovation.id.includes('-')
+      const isExisting = typeof innovation.id === 'string' && innovation.id.includes('-') && !innovation.id.startsWith('new_')
       
       const body = {
         id: isExisting ? innovation.id : undefined,
@@ -661,6 +708,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       if (event === 'SIGNED_OUT') {
         setUser(null)
         setPreps([])
+        setCommunityPreps([])
         setCycles([])
         setSeances([])
         setPosts([])
@@ -707,9 +755,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AppContext.Provider value={{
-      user, preps, cycles, seances, posts, ecoles, innovations, votes, toastMsg,
+      user, preps, communityPreps, cycles, seances, posts, ecoles, innovations, votes, toastMsg,
       likedPrepIds, likedCommunityIds, hydrated, loading,
-      setUser, setPreps, setCycles, setSeances, setPosts, setEcoles, setInnovations, setVotes,
+      setUser, setPreps, setCommunityPreps, setCycles, setSeances, setPosts, setEcoles, setInnovations, setVotes,
       toast, addPoints, unlockBadge, toggleLikePrep, toggleLikeCommunity, isPrepLiked, isCommunityLiked,
       loadUserData, savePreparation, deletePreparation, saveCycle, deleteCycle, 
       saveSeance, deleteSeance, saveForumPost, deleteForumPost,

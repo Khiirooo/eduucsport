@@ -21,7 +21,8 @@ export function PageCycles({ cycles, setCycles, preps, seances, toast, setPage, 
 
   const save = async () => {
     if (!form.titre || !form.discipline) return
-    const newCycle: Cycle = { id: Date.now(), ...form, prepsLiees: [] } as any
+    // Use a temp marker so the API knows it's new (store will replace with real UUID)
+    const newCycle: Cycle = { id: `new_${Date.now()}`, ...form, prepsLiees: [] } as any
     if (saveCycle) {
       const success = await saveCycle(newCycle)
       if (!success) { toast("Erreur lors de la sauvegarde. Reessayez."); return }

@@ -118,7 +118,7 @@ export function PageForum({ posts, setPosts, toast, user, addPoints, votes, setV
       contenu: correctText(form.contenu)
     }
     const newPost: ForumPost = { 
-      id: Date.now(), 
+      id: `new_${Date.now()}`, 
       ...correctedForm, 
       auteur: user.name, 
       auteurId: user.id,
@@ -175,7 +175,7 @@ export function PageForum({ posts, setPosts, toast, user, addPoints, votes, setV
         ...p, 
         replies: p.replies + 1, 
         replyList: [...(p.replyList || []), { 
-          id: Date.now(), 
+          id: `new_${Date.now()}`, 
           auteur: user.name, 
           isTeacher: user.isTeacher, 
           contenu: correctText(replyText), 

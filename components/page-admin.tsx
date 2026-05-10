@@ -57,14 +57,12 @@ export function PageAdmin({ user, preps, posts, innovations, setPreps, setPosts,
     recentUsers: [] as DBUser[], recentReports: [] as Report[]
   })
 
-  // Permission check
+  // Permission check - Vérification stricte sans bug JavaScript
   const isAdmin =
-    user.email === "1@educ.be" || 'lucas@educsport.be'
-  user.isAdmin ||
+    user.isAdmin === true ||
     user.role === "admin"
   const isModerator =
-    user.email === "lucas@educsport.be" ||
-    user.isAdmin ||
+    user.isModerator === true ||
     user.role === "moderator"
   const hasAccess = isAdmin || isModerator
 

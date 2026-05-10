@@ -6,27 +6,34 @@ import { Logo, Icon } from "@/components/ui-atoms"
 import type { User } from "@/lib/types"
 import { ChevronDown, User as UserIcon, LogOut, Shield } from "lucide-react"
 
+// Navigation principale (jamais l'admin ici)
 const NAV = [
   { id: "accueil", label: "Accueil", icon: "home", color: C.blue },
-  { id: "preparations", label: "Preparations", icon: "book", color: C.blue },
+  { id: "preparations", label: "Préparations", icon: "book", color: C.blue },
   { id: "cycles", label: "Cycles", icon: "calendar", color: C.green },
   { id: "journal", label: "Journal", icon: "doc", color: C.blue },
   { id: "ia", label: "IA", icon: "sparkles", color: C.orange },
   { id: "forum", label: "Forum", icon: "chat", color: C.purple },
-  { id: "ecole", label: "Ecole", icon: "school", color: C.orange },
+  { id: "ecole", label: "École", icon: "school", color: C.orange },
   { id: "innovations", label: "Innovations", icon: "lightbulb", color: C.amber },
-  { id: "admin", label: "Admin", icon: "lightbulb", color: C.amber },
 ]
-
 
 const ADMIN_NAV = { id: "admin", label: "Admin Panel", icon: "shield", color: C.red }
 
-// Check if user has admin or moderator access
-const hasAdminAccess = (user: User) => user.isAdmin || user.isModerator || user.role === 'admin' || user.role === 'moderator'
+// Vérification stricte des droits admin/modérateur
+const hasAdminAccess = (user: User) =>
+  user.isAdmin === true ||
+  user.isModerator === true ||
+  user.role === "admin" ||
+  user.role === "moderator"
 
-export function DashboardNav({ page, setPage, user, onLogout }: { page: string; setPage: (p: string) => void; user: User; onLogout: () => void }) {
+export function DashboardNav({ page, setPage, user, onLogout }: {
+  page: string
+  setPage: (p: string) => void
+  user: User
+  onLogout: () => void
+}) {
   const [showMenu, setShowMenu] = useState(false)
-  const [dashMobile, setDashMobile] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -37,13 +44,19 @@ export function DashboardNav({ page, setPage, user, onLogout }: { page: string; 
     return () => document.removeEventListener("mousedown", handler)
   }, [])
 
+  const adminAccess = hasAdminAccess(user)
+
   return (
-    <nav style={{ display: "flex", alignItems: "center", padding: "0 24px", height: 56, borderBottom: "1px solid #e5e7eb", background: "white", position: "sticky", top: 0, zIndex: 100, boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
+    <nav style={{
+      display: "flex", alignItems: "center", padding: "0 24px", height: 56,
+      borderBottom: "1px solid #e5e7eb", background: "white", position: "sticky",
+      top: 0, zIndex: 100, boxShadow: "0 1px 3px rgba(0,0,0,0.04)"
+    }}>
       <div style={{ cursor: "pointer", marginRight: 20 }} onClick={() => setPage("accueil")}>
         <Logo size={30} fs={16} />
       </div>
 
-      <div className="dash-nav-items">
+      <div style={{ display: "flex", gap: 2, flex: 1, overflowX: "auto" }}>
         {NAV.map(n => {
           const active = page === n.id
           return (
@@ -54,7 +67,7 @@ export function DashboardNav({ page, setPage, user, onLogout }: { page: string; 
                 background: active ? n.color : "transparent",
                 color: active ? "white" : "#374151",
                 fontWeight: active ? 700 : 500, fontSize: 13, fontFamily: "inherit",
-                transition: "all .15s"
+                transition: "all .15s", whiteSpace: "nowrap",
               }}
               onMouseEnter={e => { if (!active) e.currentTarget.style.background = "#f3f4f6" }}
               onMouseLeave={e => { if (!active) e.currentTarget.style.background = "transparent" }}>
@@ -63,15 +76,17 @@ export function DashboardNav({ page, setPage, user, onLogout }: { page: string; 
             </button>
           )
         })}
-        {hasAdminAccess(user) && (
+
+        {/* Bouton Admin : visible UNIQUEMENT pour les admins/modérateurs */}
+        {adminAccess && (
           <button onClick={() => setPage(ADMIN_NAV.id)}
             style={{
               display: "flex", alignItems: "center", gap: 5, padding: "6px 11px",
               borderRadius: 9, border: "none", cursor: "pointer",
               background: page === ADMIN_NAV.id ? ADMIN_NAV.color : "transparent",
-              color: page === ADMIN_NAV.id ? "white" : "#374151",
+              color: page === ADMIN_NAV.id ? "white" : C.red,
               fontWeight: page === ADMIN_NAV.id ? 700 : 500, fontSize: 13, fontFamily: "inherit",
-              transition: "all .15s"
+              transition: "all .15s",
             }}
             onMouseEnter={e => { if (page !== ADMIN_NAV.id) e.currentTarget.style.background = "#fef2f2" }}
             onMouseLeave={e => { if (page !== ADMIN_NAV.id) e.currentTarget.style.background = "transparent" }}>
@@ -81,74 +96,69 @@ export function DashboardNav({ page, setPage, user, onLogout }: { page: string; 
         )}
       </div>
 
-      <button className="dash-hamburger" onClick={() => setDashMobile(!dashMobile)} aria-label="Menu">
-        <span /><span /><span />
-      </button>
-
-      <div className={"dash-mobile-nav" + (dashMobile ? " open" : "")}>
-        {NAV.map(n => (
-          <button key={n.id} onClick={() => { setPage(n.id); setDashMobile(false) }}
-            style={{
-              display: "flex", alignItems: "center", gap: 10, padding: "10px 12px",
-              borderRadius: 9, border: "none", cursor: "pointer",
-              background: page === n.id ? n.color : "transparent",
-              color: page === n.id ? "white" : "#374151",
-              fontWeight: page === n.id ? 700 : 500, fontSize: 14, fontFamily: "inherit",
-              width: "100%", textAlign: "left"
-            }}>
-            <Icon name={n.icon} size={14} color={page === n.id ? "white" : "#6b7280"} />
-            {n.label}
-          </button>
-        ))}
-        {hasAdminAccess(user) && (
-          <button onClick={() => { setPage(ADMIN_NAV.id); setDashMobile(false) }}
-            style={{
-              display: "flex", alignItems: "center", gap: 10, padding: "10px 12px",
-              borderRadius: 9, border: "none", cursor: "pointer",
-              background: page === ADMIN_NAV.id ? ADMIN_NAV.color : "transparent",
-              color: page === ADMIN_NAV.id ? "white" : C.red,
-              fontWeight: page === ADMIN_NAV.id ? 700 : 500, fontSize: 14, fontFamily: "inherit",
-              width: "100%", textAlign: "left"
-            }}>
-            <Shield size={14} color={page === ADMIN_NAV.id ? "white" : C.red} />
-            {ADMIN_NAV.label}
-          </button>
-        )}
-      </div>
-
-      <div ref={menuRef} style={{ position: "relative", marginLeft: "auto" }}>
-        <div onClick={() => setShowMenu(!showMenu)}
-          style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", padding: "6px 10px", borderRadius: 10 }}>
-          <div style={{
-            width: 32, height: 32, borderRadius: "50%",
-            background: user.avatarUrl ? "transparent" : user.avatarColor,
-            overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center",
-            color: "white", fontWeight: 800, fontSize: 13, boxShadow: "0 2px 6px rgba(0,0,0,0.15)"
+      <div ref={menuRef} style={{ position: "relative", marginLeft: 12 }}>
+        <button
+          onClick={() => setShowMenu(v => !v)}
+          style={{
+            display: "flex", alignItems: "center", gap: 8, padding: "6px 12px",
+            borderRadius: 10, border: "1.5px solid #e5e7eb", background: "white",
+            cursor: "pointer", fontFamily: "inherit",
           }}>
-            {user.avatarUrl
-              ? <img src={user.avatarUrl} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt="" />
-              : user.name[0]?.toUpperCase()}
+          <div style={{
+            width: 26, height: 26, borderRadius: "50%",
+            background: user.avatarColor || C.teal,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            color: "white", fontSize: 11, fontWeight: 800,
+          }}>
+            {(user.name || user.email || "U")[0]?.toUpperCase()}
           </div>
-          <span style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>
-            {"Niv."}{user.niveau}{" - "}{user.points}{"pts"}
+          <span style={{ fontSize: 13, fontWeight: 600, color: "#374151", maxWidth: 120, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {user.name || user.email}
           </span>
-          <ChevronDown size={12} color={C.gray} />
-        </div>
+          <ChevronDown size={14} color="#6b7280" />
+        </button>
 
         {showMenu && (
-          <div style={{ position: "absolute", right: 0, top: "calc(100% + 8px)", background: "white", borderRadius: 14, border: "1px solid #e5e7eb", boxShadow: "0 12px 32px rgba(0,0,0,0.12)", minWidth: 180, padding: "8px 0", zIndex: 200 }}>
+          <div style={{
+            position: "absolute", right: 0, top: "calc(100% + 8px)",
+            background: "white", borderRadius: 12, border: "1px solid #e5e7eb",
+            boxShadow: "0 4px 20px rgba(0,0,0,0.1)", padding: 6, minWidth: 180, zIndex: 200,
+          }}>
             <button onClick={() => { setPage("profil"); setShowMenu(false) }}
-              style={{ width: "100%", textAlign: "left", padding: "10px 16px", border: "none", background: "none", cursor: "pointer", fontSize: 14, color: "#374151", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 10 }}
-              onMouseEnter={e => (e.currentTarget.style.background = "#f9fafb")}
-              onMouseLeave={e => (e.currentTarget.style.background = "none")}>
-              <UserIcon size={15} color={C.gray} /> Mon profil
+              style={{
+                display: "flex", alignItems: "center", gap: 10, width: "100%",
+                padding: "9px 14px", borderRadius: 9, border: "none", background: "none",
+                cursor: "pointer", fontSize: 13, fontFamily: "inherit", color: "#374151",
+              }}
+              onMouseEnter={e => e.currentTarget.style.background = "#f9fafb"}
+              onMouseLeave={e => e.currentTarget.style.background = "none"}>
+              <UserIcon size={14} color="#6b7280" /> Mon profil
             </button>
-            <div style={{ height: 1, background: "#f1f5f9", margin: "4px 0" }} />
-            <button onClick={onLogout}
-              style={{ width: "100%", textAlign: "left", padding: "10px 16px", border: "none", background: "none", cursor: "pointer", fontSize: 14, color: C.red, fontFamily: "inherit", display: "flex", alignItems: "center", gap: 10 }}
-              onMouseEnter={e => (e.currentTarget.style.background = "#fef2f2")}
-              onMouseLeave={e => (e.currentTarget.style.background = "none")}>
-              <LogOut size={15} color={C.red} /> Se deconnecter
+
+            {adminAccess && (
+              <button onClick={() => { setPage("admin"); setShowMenu(false) }}
+                style={{
+                  display: "flex", alignItems: "center", gap: 10, width: "100%",
+                  padding: "9px 14px", borderRadius: 9, border: "none", background: "none",
+                  cursor: "pointer", fontSize: 13, fontFamily: "inherit", color: C.red,
+                }}
+                onMouseEnter={e => e.currentTarget.style.background = "#fef2f2"}
+                onMouseLeave={e => e.currentTarget.style.background = "none"}>
+                <Shield size={14} color={C.red} /> Administration
+              </button>
+            )}
+
+            <div style={{ height: 1, background: "#f3f4f6", margin: "4px 6px" }} />
+
+            <button onClick={() => { onLogout(); setShowMenu(false) }}
+              style={{
+                display: "flex", alignItems: "center", gap: 10, width: "100%",
+                padding: "9px 14px", borderRadius: 9, border: "none", background: "none",
+                cursor: "pointer", fontSize: 13, fontFamily: "inherit", color: "#ef4444",
+              }}
+              onMouseEnter={e => e.currentTarget.style.background = "#fef2f2"}
+              onMouseLeave={e => e.currentTarget.style.background = "none"}>
+              <LogOut size={14} color="#ef4444" /> Déconnexion
             </button>
           </div>
         )}

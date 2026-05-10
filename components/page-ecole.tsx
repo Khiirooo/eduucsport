@@ -99,7 +99,7 @@ export function PageEcole({ ecoles, setEcoles, toast, addPoints, user, saveEcole
   const save = async () => {
     if (!form.nom) return
     const newEcole = { 
-      id: Date.now(), 
+      id: `new_${Date.now()}`, 
       nom: correctText(form.nom), 
       adresse: form.adresse, 
       description: correctText(form.description), 
@@ -149,14 +149,14 @@ export function PageEcole({ ecoles, setEcoles, toast, addPoints, user, saveEcole
 
   const addClasse = () => {
     if (!selectedEcole || !classeForm.nom) return
-    const newC: EcoleClasse = { id: Date.now(), nom: classeForm.nom, niveau: classeForm.niveau, nb: classeForm.nb, eleves: [] }
+    const newC: EcoleClasse = { id: `new_${Date.now()}`, nom: classeForm.nom, niveau: classeForm.niveau, nb: classeForm.nb, eleves: [] }
     updateEcole(selectedEcole.id, { classes: [...(selectedEcole.classes || []), newC] })
     setClasseForm({ nom: "", niveau: "", nb: "" }); toast("Classe ajoutee !")
   }
 
   const addEleve = (classeId: number | string) => {
     if (!selectedEcole || !eleveForm.prenom) return
-    const newEleve: Eleve = { id: Date.now(), prenom: eleveForm.prenom, nom: eleveForm.nom, presences: {} }
+    const newEleve: Eleve = { id: `new_${Date.now()}`, prenom: eleveForm.prenom, nom: eleveForm.nom, presences: {} }
     const updatedClasses = (selectedEcole.classes || []).map(cl =>
       cl.id === classeId ? { ...cl, eleves: [...(cl.eleves || []), newEleve] } : cl
     )
@@ -194,7 +194,7 @@ export function PageEcole({ ecoles, setEcoles, toast, addPoints, user, saveEcole
   const addJournal = () => {
     if (!selectedEcole || !journalForm.titre) return
     const j: JournalEntry = { 
-      id: Date.now(), 
+      id: `new_${Date.now()}`, 
       ...journalForm,
       titre: correctText(journalForm.titre),
       observations: correctText(journalForm.observations),
@@ -218,7 +218,7 @@ export function PageEcole({ ecoles, setEcoles, toast, addPoints, user, saveEcole
   }
   const addCheck = () => {
     if (!selectedEcole || !checkInput) return
-    const item: ChecklistItem = { id: Date.now(), label: checkInput, done: false }
+    const item: ChecklistItem = { id: `new_${Date.now()}`, label: checkInput, done: false }
     updateEcole(selectedEcole.id, { checklist: [...(selectedEcole.checklist || []), item] })
     setCheckInput(""); toast("Tache ajoutee !")
   }
@@ -228,7 +228,7 @@ export function PageEcole({ ecoles, setEcoles, toast, addPoints, user, saveEcole
   }
   const addMateriel = () => {
     if (!selectedEcole || !materielForm.nom) return
-    const m: MaterielItem = { id: Date.now(), ...materielForm }
+    const m: MaterielItem = { id: `new_${Date.now()}`, ...materielForm }
     updateEcole(selectedEcole.id, { materielItems: [...(selectedEcole.materielItems || []), m] })
     setMaterielForm({ nom: "", quantite: "", categorie: "Sport", etat: "Bon", note: 0, informations: "", photos: [] })
     setMaterielModal(false); toast("Materiel ajoute !")
